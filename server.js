@@ -8,7 +8,8 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;  // ← ТОЛЬКО ОДИН РАЗ
+const HOST = '0.0.0.0';                 // ← ДОБАВЛЯЕМ HOST
 
 // Middleware
 app.use(cors());
@@ -20,7 +21,6 @@ const db = new sqlite3.Database('./database.db');
 
 // Создание таблиц
 db.serialize(() => {
-    // Пользователи
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -29,7 +29,6 @@ db.serialize(() => {
         role TEXT DEFAULT 'client'
     )`);
 
-    // Товары
     db.run(`CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -40,7 +39,6 @@ db.serialize(() => {
         stock INTEGER DEFAULT 100
     )`);
 
-    // Корзина
     db.run(`CREATE TABLE IF NOT EXISTS cart (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -50,7 +48,6 @@ db.serialize(() => {
         FOREIGN KEY (product_id) REFERENCES products(id)
     )`);
 
-    // Заказы
     db.run(`CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -60,7 +57,6 @@ db.serialize(() => {
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
-    // Товары в заказе
     db.run(`CREATE TABLE IF NOT EXISTS order_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         order_id INTEGER NOT NULL,
@@ -75,7 +71,7 @@ db.serialize(() => {
 // Импорт CSV при запуске
 function importCSVIfNeeded() {
     db.get('SELECT COUNT(*) as count FROM products', (err, row) => {
-        if (row.count === 0 && fs.existsSync('./products.csv')) {
+        if (row && row.count === 0 && fs.existsSync('./products.csv')) {
             console.log('Импорт товаров из CSV...');
             const products = [];
             fs.createReadStream('./products.csv')
@@ -105,7 +101,7 @@ setTimeout(importCSVIfNeeded, 1000);
 
 // ========== API РОУТЫ ==========
 
-// --- Товары (прежние) ---
+// Товары
 app.get('/api/products', (req, res) => {
     const { category, search } = req.query;
     let query = 'SELECT * FROM products';
@@ -145,7 +141,7 @@ app.post('/api/products', (req, res) => {
         });
 });
 
-// --- Пользователи (прежние) ---
+// Пользователи
 app.post('/api/register', async (req, res) => {
     const { name, email, password, role } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -176,7 +172,7 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// --- Корзина (прежние) ---
+// Корзина
 app.get('/api/cart/:userId', (req, res) => {
     db.all(`SELECT c.*, p.name, p.price, p.image 
             FROM cart c 
@@ -224,12 +220,10 @@ app.delete('/api/cart/:userId', (req, res) => {
     });
 });
 
-// --- Заказы (новые) ---
-// Создание заказа (из корзины)
+// Заказы
 app.post('/api/orders', (req, res) => {
     const { user_id } = req.body;
     
-    // Получаем содержимое корзины
     db.all(`SELECT c.product_id, c.quantity, p.price, p.stock 
             FROM cart c 
             JOIN products p ON c.product_id = p.id 
@@ -237,17 +231,14 @@ app.post('/api/orders', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
         if (cartItems.length === 0) return res.status(400).json({ error: 'Корзина пуста' });
         
-        // Проверяем наличие на складе (опционально)
         for (let item of cartItems) {
             if (item.quantity > item.stock) {
-                return res.status(400).json({ error: `Недостаточно товара "${item.name}" на складе` });
+                return res.status(400).json({ error: `Недостаточно товара на складе` });
             }
         }
         
-        // Вычисляем общую сумму
         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
-        // Начинаем транзакцию
         db.serialize(() => {
             db.run('BEGIN TRANSACTION');
             
@@ -259,17 +250,13 @@ app.post('/api/orders', (req, res) => {
                     }
                     
                     const orderId = this.lastID;
-                    
-                    // Вставляем позиции заказа
                     const stmt = db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_time) VALUES (?, ?, ?, ?)');
                     for (let item of cartItems) {
                         stmt.run(orderId, item.product_id, item.quantity, item.price);
-                        // Уменьшаем остаток на складе
                         db.run('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.product_id]);
                     }
                     stmt.finalize();
                     
-                    // Очищаем корзину
                     db.run('DELETE FROM cart WHERE user_id = ?', [user_id], (err) => {
                         if (err) {
                             db.run('ROLLBACK');
@@ -284,9 +271,8 @@ app.post('/api/orders', (req, res) => {
     });
 });
 
-// Получение заказов (для менеджера все, для клиента свои)
 app.get('/api/orders', (req, res) => {
-    const { user_id, role } = req.query; // role и user_id передаём с клиента (можно из сессии, но у нас упрощённо)
+    const { user_id, role } = req.query;
     
     let query = `
         SELECT o.id, o.user_id, u.name as user_name, u.email, o.order_date, o.status, o.total_amount
@@ -308,7 +294,6 @@ app.get('/api/orders', (req, res) => {
     });
 });
 
-// Получение деталей заказа (состав)
 app.get('/api/orders/:id/items', (req, res) => {
     db.all(`SELECT oi.*, p.name, p.image 
             FROM order_items oi
@@ -319,7 +304,6 @@ app.get('/api/orders/:id/items', (req, res) => {
     });
 });
 
-// Изменение статуса заказа (менеджер)
 app.patch('/api/orders/:id/status', (req, res) => {
     const { status } = req.body;
     const validStatuses = ['новый', 'в обработке', 'готов к выдаче', 'выполнен', 'отменён'];
@@ -335,7 +319,7 @@ app.patch('/api/orders/:id/status', (req, res) => {
     });
 });
 
-// --- Экспорт/импорт CSV (прежние) ---
+// Экспорт/импорт CSV
 app.get('/api/export/csv', (req, res) => {
     db.all('SELECT id, name, category, price, description FROM products', (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -375,6 +359,9 @@ app.post('/api/import/csv', upload.single('file'), (req, res) => {
         });
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Сервер запущен: http://localhost:${PORT}`);
+// ========== ЗАПУСК СЕРВЕРА ==========
+app.listen(PORT, HOST, () => {
+    console.log(`✅ Сервер запущен:`);
+    console.log(`   - Локально: http://localhost:${PORT}`);
+    console.log(`   - Для туннеля: http://0.0.0.0:${PORT}`);
 });
