@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Store - Каталог</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-black: #1d1d1f;
+            --apple-gray: #f5f5f7;
+            --apple-blue: #0071e3;
+            --apple-blue-hover: #0077ed;
+            --apple-dark-gray: #86868b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--apple-gray);
+            color: var(--apple-black);
+            padding-top: 70px;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+        }
+        .navbar-brand { font-weight: 600; font-size: 24px; color: var(--apple-black) !important; }
+        .navbar-brand i { color: var(--apple-blue); margin-right: 8px; }
+        .nav-link { color: var(--apple-black) !important; font-weight: 500; font-size: 14px; margin: 0 10px; }
+        .nav-link:hover { color: var(--apple-blue) !important; }
+        .catalog-hero {
+            background: linear-gradient(180deg, #fff 0%, var(--apple-gray) 100%);
+            padding: 80px 0 40px; text-align: center;
+        }
+        .catalog-hero h1 { font-size: 56px; font-weight: 700; }
+        .category-filter { background: white; padding: 30px 0; margin-bottom: 40px; }
+        .category-btn {
+            background: transparent; border: none; color: var(--apple-dark-gray);
+            padding: 10px 24px; margin: 0 8px; border-radius: 980px;
+            font-weight: 500; transition: all 0.3s;
+        }
+        .category-btn.active { background: var(--apple-blue); color: white; }
+        .product-card {
+            background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s; cursor: pointer; height: 100%;
+        }
+        .product-card:hover { transform: translateY(-8px); }
+        .product-img-container { background: var(--apple-gray); padding: 30px; text-align: center; position: relative; }
+        .product-img { max-height: 200px; }
+        .product-badge {
+            position: absolute; top: 15px; right: 15px; background: var(--apple-blue);
+            color: white; padding: 4px 12px; border-radius: 980px; font-size: 12px;
+        }
+        .product-content { padding: 24px; }
+        .product-price { font-size: 28px; font-weight: 700; }
+        .btn-apple {
+            background: var(--apple-blue); color: white; border: none; padding: 8px 24px;
+            border-radius: 980px; font-weight: 500;
+        }
+        .cart-count {
+            background: var(--apple-blue); color: white; padding: 2px 8px;
+            border-radius: 20px; font-size: 12px; margin-left: 5px;
+        }
+        .modal-content { border-radius: 24px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html"><i class="fab fa-apple"></i>Магазин техники</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Главная</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="catalog.html">Каталог</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#about">О нас</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html#contact">Контакты</a></li>
+                    <li class="nav-item" id="ordersNavItem" style="display: none;">
+    <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#ordersModal"><i class="fas fa-list-check"></i> Заказы</a>
+</li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-count" id="cartCount">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item ms-2" id="authButtons">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2" data-bs-toggle="modal" data-bs-target="#loginModal">Войти</button>
+                        <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#registerModal">Регистрация</button>
+                    </li>
+                    <li class="nav-item dropdown" id="userDropdown" style="display: none;">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> <span id="userNameDisplay"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text" id="userRoleDisplay"></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</button></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="catalog-hero">
+        <div class="container">
+            <h1>Каталог Apple</h1>
+            <p>iPhone, iPad, Mac и аксессуары</p>
+        </div>
+    </section>
+
+    <section class="category-filter">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 text-center">
+                    <button class="category-btn active" data-filter="all">Все товары</button>
+                    <button class="category-btn" data-filter="iphone">iPhone</button>
+                    <button class="category-btn" data-filter="ipad">iPad</button>
+                    <button class="category-btn" data-filter="mac">Mac</button>
+                    <button class="category-btn" data-filter="watch">Apple Watch</button>
+                    <button class="category-btn" data-filter="airpods">AirPods</button>
+                    <button class="category-btn" data-filter="accessories">Аксессуары</button>
+                    <button class="category-btn" data-filter="new">Новинки</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="search-box mb-4">
+                <div class="input-group">
+                    <input type="text" id="search-input" class="form-control" placeholder="Поиск...">
+                    <button class="btn btn-primary" id="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
+            <div id="managerControls" class="mb-4 text-end" style="display: none;">
+                <button class="btn btn-success rounded-pill me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="fas fa-plus"></i> Добавить товар
+                </button>
+                <button class="btn btn-outline-secondary rounded-pill me-2" id="exportProductsBtn">
+                    <i class="fas fa-download"></i> Экспорт CSV
+                </button>
+                <label class="btn btn-outline-secondary rounded-pill mb-0">
+                    <i class="fas fa-upload"></i> Импорт CSV
+                    <input type="file" id="importProductsFile" accept=".csv" style="display: none;">
+                </label>
+            </div>
+
+            <div class="row g-4" id="product-grid"></div>
+            <div id="no-products" class="text-center py-5" style="display: none;">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h3>Товары не найдены</h3>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-12">
+                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">© 2026 Магазин техники. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- Модалки -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4">
+                <h3 class="mb-4">Вход</h3>
+                <form id="loginForm">
+                    <div class="mb-3"><input type="email" class="form-control" id="loginEmail" placeholder="Email" required></div>
+                    <div class="mb-3"><input type="password" class="form-control" id="loginPassword" placeholder="Пароль" required></div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2">Войти</button>
+                    <div id="loginError" class="text-danger mt-2 small"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4">
+                <h3 class="mb-4">Регистрация</h3>
+                <form id="registerForm">
+                    <div class="mb-3"><input type="text" class="form-control" id="regName" placeholder="Имя" required></div>
+                    <div class="mb-3"><input type="email" class="form-control" id="regEmail" placeholder="Email" required></div>
+                    <div class="mb-3"><input type="password" class="form-control" id="regPassword" placeholder="Пароль" required></div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2">Зарегистрироваться</button>
+                    <div id="regError" class="text-danger mt-2 small"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" style="width: 400px;">
+        <div class="offcanvas-header"><h5 class="offcanvas-title">Корзина</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+        <div class="offcanvas-body d-flex flex-column">
+    <div id="cartItemsContainer" class="flex-grow-1"></div>
+    <div class="mt-3">
+        <button class="btn btn-success w-100 rounded-pill" id="checkoutBtn" style="display: none;">
+            <i class="fas fa-check-circle me-2"></i>Оформить заказ
+        </button>
+    </div>
+</div>
+    </div>
+
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content p-3" id="productModalContent"></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content p-4">
+                <h3>Добавить товар</h3>
+                <form id="addProductForm">
+                    <input class="form-control mb-2" id="prodName" placeholder="Название" required>
+                    <input class="form-control mb-2" id="prodCategory" placeholder="Категория" required>
+                    <input class="form-control mb-2" id="prodPrice" type="number" placeholder="Цена" required>
+                    <input class="form-control mb-2" id="prodImage" placeholder="URL изображения">
+                    <textarea class="form-control mb-2" id="prodDesc" placeholder="Описание"></textarea>
+                    <button type="submit" class="btn btn-primary w-100">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно заказов (для менеджера) -->
+<div class="modal fade" id="ordersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-truck me-2"></i>Управление заказами</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID заказа</th>
+                                <th>Клиент</th>
+                                <th>Дата</th>
+                                <th>Сумма</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody"></tbody>
+                    </table>
+                </div>
+                <!-- Детали заказа -->
+                <div id="orderDetails" class="mt-4" style="display: none;">
+                    <h6>Состав заказа:</h6>
+                    <div id="orderItemsList" class="list-group"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const ORDER_STATUSES = ['новый', 'в обработке', 'готов к выдаче', 'выполнен', 'отменён'];
+        // ========== API КОНФИГУРАЦИЯ ==========
+        const API_URL = 'http://localhost:3000/api';
+
+        // ========== ПЕРЕМЕННЫЕ КАТАЛОГА ==========
+        let currentPage = 1;
+        const perPage = 6;
+        let filteredProducts = [];
+        let currentCategory = 'all';
+        let currentSearch = '';
+
+        // ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
+        function getCurrentUser() { 
+            return JSON.parse(sessionStorage.getItem('currentUser')); 
+        }
+        function setCurrentUser(user) { 
+            sessionStorage.setItem('currentUser', JSON.stringify(user)); 
+        }
+
+        // ========== API ЗАПРОСЫ ==========
+        async function loadProducts() {
+            const res = await fetch(`${API_URL}/products`);
+            return await res.json();
+        }
+
+        async function saveProduct(product) {
+            await fetch(`${API_URL}/products`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+        }
+
+        async function getCart() {
+            const user = getCurrentUser();
+            if (!user) return [];
+            const res = await fetch(`${API_URL}/cart/${user.id}`);
+            return await res.json();
+        }
+
+        async function addToCart(productId, quantity) {
+            const user = getCurrentUser();
+            if (!user) {
+                alert('Войдите в систему');
+                return;
+            }
+            await fetch(`${API_URL}/cart`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: user.id, product_id: parseInt(productId), quantity })
+            });
+            await updateCartCount();
+        }
+
+        async function removeFromCart(productId) {
+            const user = getCurrentUser();
+            if (!user) return;
+            await fetch(`${API_URL}/cart/${user.id}/${productId}`, { method: 'DELETE' });
+            await updateCartCount();
+        }
+
+        async function clearCart() {
+            const user = getCurrentUser();
+            if (!user) return;
+            await fetch(`${API_URL}/cart/${user.id}`, { method: 'DELETE' });
+            await updateCartCount();
+        }
+
+        async function updateCartCount() {
+            const user = getCurrentUser();
+            if (!user) {
+                document.querySelectorAll('#cartCount').forEach(el => el.textContent = '0');
+                return;
+            }
+            const cart = await getCart();
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.querySelectorAll('#cartCount').forEach(el => el.textContent = count);
+        }
+
+        function updateAuthUI() {
+            const user = getCurrentUser();
+            const authBtns = document.getElementById('authButtons');
+            const userDropdown = document.getElementById('userDropdown');
+            const userNameSpan = document.getElementById('userNameDisplay');
+            const userRoleSpan = document.getElementById('userRoleDisplay');
+            
+            if (user) {
+                if (authBtns) authBtns.style.display = 'none';
+                if (userDropdown) userDropdown.style.display = 'block';
+                if (userNameSpan) userNameSpan.textContent = user.name;
+                if (userRoleSpan) userRoleSpan.textContent = user.role === 'manager' ? 'Менеджер' : 'Клиент';
+            } else {
+                if (authBtns) authBtns.style.display = 'block';
+                if (userDropdown) userDropdown.style.display = 'none';
+            }
+            updateCartCount();
+            setupManagerUI();
+            const ordersNavItem = document.getElementById('ordersNavItem');
+    if (ordersNavItem) {
+        ordersNavItem.style.display = (user && user.role === 'manager') ? 'block' : 'none';
+    }
+        }
+
+        function setupManagerUI() {
+            const user = getCurrentUser();
+            const controls = document.getElementById('managerControls');
+            if (controls) {
+                controls.style.display = (user && user.role === 'manager') ? 'block' : 'none';
+            }
+        }
+
+        // ========== ЗАГРУЗКА КОРЗИНЫ ==========
+       async function loadCartItems() {
+    const cartContainer = document.getElementById('cartItemsContainer');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (!cartContainer) return;
+    
+    const user = getCurrentUser();
+    if (!user) {
+        cartContainer.innerHTML = '<p class="text-center">Войдите, чтобы увидеть корзину</p>';
+        if (checkoutBtn) checkoutBtn.style.display = 'none';
+        return;
+    }
+    
+    const cart = await getCart();
+    let html = '';
+    let total = 0;
+    
+    cart.forEach(item => {
+        const sum = item.price * item.quantity;
+        total += sum;
+        html += `<div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <strong>${item.name}</strong><br>
+                <small>${item.quantity} × ${item.price.toLocaleString()} ₽</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span>${sum.toLocaleString()} ₽</span>
+                <button class="btn btn-sm btn-outline-danger remove-cart-item" data-id="${item.product_id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>`;
+    });
+    
+    html += `<hr><h5 class="text-end">Итого: ${total.toLocaleString()} ₽</h5>`;
+    if (cart.length > 0) {
+        html += `<button class="btn btn-outline-danger w-100 mt-2" id="clearCartBtn">
+            <i class="fas fa-trash me-2"></i>Очистить корзину
+        </button>`;
+    } else {
+        html = '<p class="text-center text-muted">Корзина пуста</p>' + html;
+    }
+    
+    cartContainer.innerHTML = html;
+    
+    // Показываем/скрываем кнопку оформления заказа
+    if (checkoutBtn) {
+        checkoutBtn.style.display = cart.length > 0 ? 'block' : 'none';
+        checkoutBtn.onclick = () => placeOrder();
+    }
+    
+    // Обработчики удаления
+    document.querySelectorAll('.remove-cart-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            await removeFromCart(btn.dataset.id);
+            await loadCartItems();
+            await updateCartCount();
+        });
+    });
+    
+    document.getElementById('clearCartBtn')?.addEventListener('click', async () => {
+        await clearCart();
+        await loadCartItems();
+        await updateCartCount();
+    });
+}
+async function placeOrder() {
+    const user = getCurrentUser();
+    if (!user) {
+        alert('Войдите в систему');
+        return;
+    }
+    
+    if (!confirm('Оформить заказ? Сумма будет списана с вашего бонусного счёта (демо).')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.id })
+        });
+        
+        if (!res.ok) {
+            const err = await res.json();
+            alert('Ошибка: ' + err.error);
+            return;
+        }
+        
+        const data = await res.json();
+        alert(`Заказ №${data.orderId} оформлен! Сумма: ${data.total.toLocaleString()} ₽`);
+        
+        // Обновляем корзину и счётчик
+        await loadCartItems();
+        await updateCartCount();
+        
+        // Закрываем offcanvas корзины
+        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('cartOffcanvas'));
+        if (offcanvas) offcanvas.hide();
+    } catch (err) {
+        alert('Ошибка соединения с сервером');
+    }
+}
+// Загрузка списка заказов в модалку
+async function loadOrders() {
+    const user = getCurrentUser();
+    if (!user || user.role !== 'manager') return;
+    
+    const res = await fetch(`${API_URL}/orders?role=manager`);
+    const orders = await res.json();
+    
+    const tbody = document.getElementById('ordersTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = orders.map(order => `
+        <tr>
+            <td>#${order.id}</td>
+            <td>${order.user_name}<br><small>${order.email}</small></td>
+            <td>${new Date(order.order_date).toLocaleString()}</td>
+            <td>${order.total_amount.toLocaleString()} ₽</td>
+            <td>
+                <select class="form-select form-select-sm status-select" data-order-id="${order.id}" style="min-width: 140px;">
+                    ${ORDER_STATUSES.map(s => `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary view-items-btn" data-order-id="${order.id}">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Обработчики изменения статуса
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const orderId = e.target.dataset.orderId;
+            const newStatus = e.target.value;
+            
+            await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            
+            alert('Статус обновлён');
+        });
+    });
+    
+    // Обработчики просмотра состава
+    document.querySelectorAll('.view-items-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const orderId = btn.dataset.orderId;
+            const res = await fetch(`${API_URL}/orders/${orderId}/items`);
+            const items = await res.json();
+            
+            const detailsDiv = document.getElementById('orderDetails');
+            const itemsList = document.getElementById('orderItemsList');
+            
+            itemsList.innerHTML = items.map(item => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <small>${item.quantity} × ${item.price_at_time.toLocaleString()} ₽</small>
+                    </div>
+                    <span>${(item.quantity * item.price_at_time).toLocaleString()} ₽</span>
+                </div>
+            `).join('');
+            
+            detailsDiv.style.display = 'block';
+        });
+    });
+}
+
+// При открытии модалки заказов подгружаем данные
+document.addEventListener('DOMContentLoaded', () => {
+    const ordersModal = document.getElementById('ordersModal');
+    if (ordersModal) {
+        ordersModal.addEventListener('show.bs.modal', loadOrders);
+    }
+});
+        // ========== МОДАЛКА ТОВАРА ==========
+        async function showProductModal(productId) {
+            const res = await fetch(`${API_URL}/products/${productId}`);
+            const product = await res.json();
+            if (!product) return;
+            
+            const modalContent = document.getElementById('productModalContent');
+            modalContent.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6"><img src="${product.image}" class="img-fluid rounded-4"></div>
+                    <div class="col-md-6">
+                        <h2>${product.name}</h2>
+                        <p class="text-muted">${product.description || ''}</p>
+                        <h3 class="my-3">${product.price.toLocaleString()} ₽</h3>
+                        <div class="d-flex gap-2 mb-3">
+                            <input type="number" id="productQty" class="form-control w-25" value="1" min="1" max="${product.stock || 100}">
+                            <button class="btn btn-primary rounded-pill px-4" id="addToCartBtn">В корзину</button>
+                        </div>
+                        <button class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('addToCartBtn').addEventListener('click', async () => {
+                const qty = parseInt(document.getElementById('productQty').value);
+                await addToCart(product.id, qty);
+                bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                alert('Товар добавлен в корзину');
+            });
+            
+            new bootstrap.Modal(document.getElementById('productModal')).show();
+        }
+
+        // ========== ФИЛЬТРАЦИЯ И ОТОБРАЖЕНИЕ ==========
+        async function filterAndDisplay() {
+            let url = `${API_URL}/products?`;
+            if (currentCategory !== 'all') url += `category=${currentCategory}&`;
+            if (currentSearch) url += `search=${encodeURIComponent(currentSearch)}&`;
+            
+            const res = await fetch(url);
+            const products = await res.json();
+            filteredProducts = products;
+            currentPage = 1;
+            displayProducts(filteredProducts, currentPage);
+        }
+
+        function displayProducts(products, page) {
+            const grid = document.getElementById('product-grid');
+            const start = (page - 1) * perPage;
+            const pageItems = products.slice(start, start + perPage);
+            
+            grid.innerHTML = pageItems.map(p => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="product-card" data-product-id="${p.id}">
+                        <div class="product-img-container">
+                            <img src="${p.image}" class="product-img">
+                            ${p.badges?.length ? p.badges.map(b => `<span class="product-badge ${b}">${b==='new'?'Новинка':'Хит'}</span>`).join('') : ''}
+                        </div>
+                        <div class="product-content">
+                            <div class="product-category text-uppercase text-muted">${p.category}</div>
+                            <h3 class="product-title">${p.name}</h3>
+                            <p class="text-muted small">${p.description || ''}</p>
+                            <div class="product-price">${p.price.toLocaleString()} ₽</div>
+                            <button class="btn-apple w-100 add-to-cart-btn" data-id="${p.id}">В корзину</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const totalPages = Math.ceil(products.length / perPage);
+            const pag = document.getElementById('pagination');
+            pag.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pag.innerHTML += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#">${i}</a></li>`;
+            }
+            
+            document.querySelectorAll('.page-link').forEach(link => link.addEventListener('click', e => {
+                e.preventDefault();
+                currentPage = parseInt(link.textContent);
+                displayProducts(filteredProducts, currentPage);
+            }));
+
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', e => {
+                    if (e.target.closest('button')) return;
+                    showProductModal(card.dataset.productId);
+                });
+            });
+            
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    await addToCart(btn.dataset.id, 1);
+                    alert('Товар добавлен в корзину');
+                });
+            });
+
+            document.getElementById('no-products').style.display = products.length ? 'none' : 'block';
+        }
+
+        // ========== ЭКСПОРТ/ИМПОРТ CSV ==========
+        function exportToCSV() {
+            window.open(`${API_URL}/export/csv`, '_blank');
+        }
+
+        async function importFromCSV(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const res = await fetch(`${API_URL}/import/csv`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await res.json();
+            alert(`Импортировано товаров: ${result.count}`);
+            await filterAndDisplay();
+            e.target.value = '';
+        }
+
+        // ========== ОБРАБОТЧИКИ ФОРМ ==========
+        document.addEventListener('click', e => {
+            if (e.target.id === 'logoutBtn' || e.target.closest('#logoutBtn')) {
+                sessionStorage.removeItem('currentUser');
+                updateAuthUI();
+                location.reload();
+            }
+        });
+
+        document.getElementById('registerForm')?.addEventListener('submit', async e => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const role = 'client';
+            
+            try {
+                const res = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    document.getElementById('regError').textContent = err.error;
+                    return;
+                }
+                
+                const user = await res.json();
+                setCurrentUser(user);
+                updateAuthUI();
+                bootstrap.Modal.getInstance(document.getElementById('registerModal')).hide();
+                location.reload();
+            } catch (err) {
+                document.getElementById('regError').textContent = 'Ошибка соединения с сервером';
+            }
+        });
+
+        document.getElementById('loginForm')?.addEventListener('submit', async e => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    document.getElementById('loginError').textContent = err.error;
+                    return;
+                }
+                
+                const user = await res.json();
+                setCurrentUser(user);
+                updateAuthUI();
+                bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                location.reload();
+            } catch (err) {
+                document.getElementById('loginError').textContent = 'Ошибка соединения с сервером';
+            }
+        });
+
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        document.addEventListener('DOMContentLoaded', async () => {
+            updateAuthUI();
+            
+            filteredProducts = await loadProducts();
+            displayProducts(filteredProducts, currentPage);
+
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.filter;
+                    filterAndDisplay();
+                });
+            });
+
+            document.getElementById('search-btn').addEventListener('click', () => {
+                currentSearch = document.getElementById('search-input').value;
+                filterAndDisplay();
+            });
+
+            document.getElementById('search-input').addEventListener('keyup', e => {
+                if (e.key === 'Enter') {
+                    currentSearch = e.target.value;
+                    filterAndDisplay();
+                }
+            });
+
+            document.getElementById('exportProductsBtn')?.addEventListener('click', exportToCSV);
+            document.getElementById('importProductsFile')?.addEventListener('change', importFromCSV);
+
+            document.getElementById('addProductForm')?.addEventListener('submit', async e => {
+                e.preventDefault();
+                
+                const product = {
+                    name: document.getElementById('prodName').value,
+                    category: document.getElementById('prodCategory').value,
+                    price: parseInt(document.getElementById('prodPrice').value),
+                    image: document.getElementById('prodImage').value || 'https://via.placeholder.com/300',
+                    description: document.getElementById('prodDesc').value
+                };
+                
+                await saveProduct(product);
+                bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                await filterAndDisplay();
+                document.getElementById('addProductForm').reset();
+            });
+
+            const cartOffcanvas = document.getElementById('cartOffcanvas');
+if (cartOffcanvas) {
+    cartOffcanvas.addEventListener('show.bs.offcanvas', loadCartItems);
+}
+        });
+    </script>
+</body>
+</html>
